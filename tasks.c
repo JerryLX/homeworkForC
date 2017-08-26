@@ -27,10 +27,11 @@
 #define NUMOFTHRESHOLD 7
 #define FIRSTTHRESHOLD 0.5
 
+
 #define OUTPUT1 "task1.csv"
 #define OUTPUT2 "task2.csv"
 #define OUTPUT3 "task3.csv"
-#define OUTPUT4 "task4.csv"
+#define OUTPUT4 "task4_1.csv"
 
 
 /*
@@ -74,7 +75,7 @@ int sort_by_y(const void *a, const void *b){
 }
 
 int sort_by_score(const void *a, const void *b){
-    return (((struct Grid *)a)->score > ((struct Grid *)b)->score); 
+    return (((struct Grid *)a)->score < ((struct Grid *)b)->score); 
 }
 
 void maxveldiff(const char* flow_file)
@@ -151,7 +152,7 @@ void coarsegrid_on_y(struct FlowPoint *data, int begin, int end, struct Grid* gr
 }
 
 void coarsegrid_on_x(int resolution, struct FlowPoint *data, int begin, int end, struct Grid* grids){
-    int i, ybegin = 0, yend = 0;
+    int i, ybegin, yend = begin;
     float height_cell = HEIGHT / resolution;
     
     qsort(&data[begin],end-begin,sizeof(struct FlowPoint),sort_by_y);
@@ -162,7 +163,6 @@ void coarsegrid_on_x(int resolution, struct FlowPoint *data, int begin, int end,
             if(data[yend].y>next_y)
                 break;
         }
-        printf("%d,%d\n",ybegin,yend);
         coarsegrid_on_y(data,ybegin,yend,grids+(i-1));
     }    
 }
@@ -236,7 +236,7 @@ void velstat(const char* flow_file)
     fpw = safe_fopen(OUTPUT3,"w");
     fprintf(fpw, "threshold,points,percentage\n");
     for(i=0;i<NUMOFTHRESHOLD;i++){
-        fprintf(fpw, "%.6f,%d,%.6f\n",start+i*0.1,num[i],(float)num[i]/index);
+        fprintf(fpw, "%.6f,%d,%.6f\n",start+i*0.1,num[i],(float)num[i]*100/index);
     }
     fpw = safe_fopen(OUTPUT3,"w");
     
@@ -245,11 +245,41 @@ void velstat(const char* flow_file)
 
 void wakevis(const char* flow_file)
 {
-    printf("wakevis() Part 1 - IMPLEMENT ME!\n");
     int i,j;
     int n = 12; // Location in x for wake visualization
     float* yheight;
+    float x,y,u,v;
+    struct FlowPoint points[n];
+    char buf[MAX_BUF_LEN];
+    FILE *fp,*fpw;
+
+    for (i = 0; i < n; i++){
+        points[i].u = FLT_MIN;
+    }
+
     yheight = (float*) calloc(n,sizeof(float));
+    
+    fp = safe_fopen(flow_file, "r");
+    fgets(buf, MAX_BUF_LEN,fp); //skip first line
+    while(fscanf(fp,"%f,%f,%f,%f\n",&x,&y,&u,&v) == 4) {
+        int index = ((x+0.05)/5);
+        if(x < index*5 + 0.05 && x > index*5 - 0.05){
+            if(u > points[index-2].u){
+                points[index-2].u = u;
+                points[index-2].x = x;
+                points[index-2].y = y;
+            }
+        }
+    }
+    fclose(fp);
+
+    fpw = safe_fopen(OUTPUT4, "w");
+    fprintf(fpw,"x,y_h\n");
+    for(i=0; i<n; i++){
+        fprintf(fpw,"%.6f,%.6f\n",points[i].x,points[i].y);
+        yheight[i] = ceil(fabs(points[i].y)*10);
+    }
+    fclose(fpw);
     /* Task 4: Part 2, nothing is to be changed here
        Remember to output the spacing into the array yheight
        for this to work. You also need to initialize i,j and 
@@ -276,6 +306,4 @@ void wakevis(const char* flow_file)
     
     /* Cleanup */
     free(yheight);
-
-    exit(EXIT_FAILURE);
 }

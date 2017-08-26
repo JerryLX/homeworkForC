@@ -32,24 +32,28 @@ int main(int argc, char *argv[]) {
     maxveldiff(flow_file);
 	
     gettimeofday(&timemark2,NULL);
-    elapsed1 = (timemark2.tv_sec - timemark1.tv_sec) * 1000.0;
+    elapsed1 = (timemark2.tv_usec - timemark1.tv_usec) / 1000.0 
+        + (timemark2.tv_sec - timemark1.tv_sec) * 1000.0;
     printf("TASK 1: %.2f milliseconds\n", elapsed1);
 
     coarsegrid(flow_file, resolution);
 	
     gettimeofday(&timemark3,NULL);
-    elapsed2 = (timemark3.tv_sec - timemark2.tv_sec) * 1000.0;
+    elapsed2 = (timemark3.tv_usec - timemark2.tv_usec) / 1000.0 
+        + (timemark3.tv_sec - timemark2.tv_sec) * 1000.0;
     printf("TASK 2: %.2f milliseconds\n", elapsed2);
 	
     velstat(flow_file);
     gettimeofday(&timemark4,NULL);
-    elapsed3 = (timemark4.tv_sec - timemark3.tv_sec) * 1000.0;
+    elapsed3 = (timemark4.tv_usec - timemark3.tv_usec) / 1000.0 
+        + (timemark4.tv_sec - timemark3.tv_sec) * 1000.0;
     printf("TASK 3: %.2f milliseconds\n", elapsed3);
 	
     wakevis(flow_file);
     
     gettimeofday(&timemark5,NULL);
-    elapsed4 = (timemark5.tv_sec - timemark4.tv_sec) * 1000.0;
+    elapsed4 = (timemark5.tv_usec - timemark4.tv_usec) / 1000.0 
+        + (timemark5.tv_sec - timemark4.tv_sec) * 1000.0;
     printf("TASK 4: %.2f milliseconds\n", elapsed4);
 	return (EXIT_SUCCESS);
 }
