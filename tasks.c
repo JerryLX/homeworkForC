@@ -26,7 +26,8 @@
 #define HEIGHT 40.0
 #define NUMOFTHRESHOLD 7
 #define FIRSTTHRESHOLD 0.5
-
+#define STEP 5
+#define THRESHOLD 0.03
 
 #define OUTPUT1 "task1.csv"
 #define OUTPUT2 "task2.csv"
@@ -262,8 +263,8 @@ void wakevis(const char* flow_file)
     fp = safe_fopen(flow_file, "r");
     fgets(buf, MAX_BUF_LEN,fp); //skip first line
     while(fscanf(fp,"%f,%f,%f,%f\n",&x,&y,&u,&v) == 4) {
-        int index = ((x+0.05)/5);
-        if(x < index*5 + 0.05 && x > index*5 - 0.05){
+        int index = ((x+THRESHOLD)/STEP);
+        if(x < index*STEP + THRESHOLD && x > index*STEP - THRESHOLD){
             if(u > points[index-2].u){
                 points[index-2].u = u;
                 points[index-2].x = x;
