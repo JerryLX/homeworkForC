@@ -161,7 +161,6 @@ void coarsegrid_on_x(int resolution, struct FlowPoint *data, int begin, int end,
         double next_y = YMIN + i*height_cell;
         if(i == resolution)
             next_y = YMAX+1;
-        
         for(ybegin=begin;ybegin<end;ybegin++){
             if(data[ybegin].y >= cur_y) break;
         }
