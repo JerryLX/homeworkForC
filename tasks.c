@@ -90,7 +90,8 @@ void maxveldiff(const char* flow_file)
 
     fp = safe_fopen(flow_file, "r");
     data = safe_malloc(sizeof(struct FlowPoint) * MAX_DATA_SIZE);
-    
+ 
+    /* read data */
     fgets(buf, MAX_BUF_LEN,fp); //skip first line
     while(fscanf(fp,"%f,%f,%f,%f\n",&data[index].x,&data[index].y,&data[index].u,&data[index].v) == 4) {
         if(data[index].x <= 20){
@@ -117,6 +118,8 @@ void maxveldiff(const char* flow_file)
         index++;
     }
     fclose(fp);
+    
+    /* write output */
     fpw = safe_fopen(OUTPUT1,"w");
     fprintf(fpw, "x,y,u,v\n");
     fprintf(fpw, "%.6f,%.6f,%.6f,%.6f\n",data[index_umax].x,data[index_umax].y,data[index_umax].u,data[index_umax].v);
@@ -127,6 +130,11 @@ void maxveldiff(const char* flow_file)
     free(data);
 }
 
+
+/**
+ * This function compute average value and score
+ * in one cell.
+ */
 void coarsegrid_on_y(struct FlowPoint *data, int begin, int end, struct Grid* grid){
     int i;
     float xsum=0,ysum=0,usum=0,vsum=0;
@@ -138,6 +146,7 @@ void coarsegrid_on_y(struct FlowPoint *data, int begin, int end, struct Grid* gr
         grid->score=0;
         return;
     }
+    
     for(i=begin;i<end;i++){
         xsum+=data[i].x;
         ysum+=data[i].y;
@@ -151,16 +160,21 @@ void coarsegrid_on_y(struct FlowPoint *data, int begin, int end, struct Grid* gr
     grid->score = 100 * sqrt(pow(grid->u,2)+pow(grid->v,2))/sqrt(pow(grid->x,2)+pow(grid->y,2));
 }
 
+/**
+ * This function compute average value and score
+ * for all cells in one line.
+ */
 void coarsegrid_on_x(int resolution, struct FlowPoint *data, int begin, int end, struct Grid* grids){
-    int i, ybegin, yend = begin;
+    int i, ybegin, yend;
     float height_cell = HEIGHT / resolution;
     
     qsort(&data[begin],end-begin,sizeof(struct FlowPoint),sort_by_y);
     for(i=1;i<=resolution;i++){
-        double cur_y = YMIN + (i-1)*height_cell;
-        double next_y = YMIN + i*height_cell;
+        double cur_y = YMIN + (i-1)*height_cell; //lower bound of y
+        double next_y = YMIN + i*height_cell;  //upper bound of y
         if(i == resolution)
             next_y = YMAX+1;
+
         for(ybegin=begin;ybegin<end;ybegin++){
             if(data[ybegin].y >= cur_y) break;
         }
@@ -184,7 +198,8 @@ void coarsegrid(const char* flow_file, int resolution)
 
     fp = safe_fopen(flow_file, "r");
     data = safe_malloc(sizeof(struct FlowPoint) * MAX_DATA_SIZE);
-    
+
+    /* read data */
     fgets(buf, MAX_BUF_LEN,fp); //skip first line
     while(fscanf(fp,"%f,%f,%f,%f\n",&data[index].x,&data[index].y,&data[index].u,&data[index].v) == 4) {
         index++;
@@ -192,15 +207,18 @@ void coarsegrid(const char* flow_file, int resolution)
     fclose(fp);
     
     grids = safe_malloc(sizeof(struct Grid) * num);
+    
+    /* sort data by x*/
     qsort(data,index,sizeof(struct FlowPoint),sort_by_x);
     for(i=1;i<=resolution;i++){
-        double cur_x = XMIN + (i-1)*width_cell;
-        double next_x = XMIN + i*width_cell;
+        double cur_x = XMIN + (i-1)*width_cell; //lower bound of x
+        double next_x = XMIN + i*width_cell;  //upper bound of x
         if(i == resolution)
             next_x = XMAX+1;
         
         for(start=0;start<index;start++){
-            if(data[start].x >= cur_x) break;
+            if(data[start].x >= cur_x) 
+                break;
         }
         for(end=start;end<index;end++){
             if(data[end].x > next_x)
@@ -211,9 +229,12 @@ void coarsegrid(const char* flow_file, int resolution)
     
     free(data);
 
+    /* sort result by score */
+    qsort(grids,num,sizeof(struct Grid),sort_by_score);
+    
+    /* write output */
     fpw = safe_fopen(OUTPUT2,"w");
     fprintf(fpw, "x,y,u,v,S\n");
-    qsort(grids,num,sizeof(struct Grid),sort_by_score);
     for(i=0;i<num;i++){
         fprintf(fpw, "%.6f,%.6f,%.6f,%.6f,%.6f\n",grids[i].x,grids[i].y,grids[i].u,grids[i].v,grids[i].score);
     }
@@ -230,8 +251,9 @@ void velstat(const char* flow_file)
     int num[NUMOFTHRESHOLD];
 
     memset(num,0,NUMOFTHRESHOLD*sizeof(int));
+ 
+    /* read data*/
     fp = safe_fopen(flow_file, "r");
-    
     fgets(buf, MAX_BUF_LEN,fp); //skip first line
     while(fscanf(fp,"%f,%f,%f,%f\n",&x,&y,&u,&v) == 4) {
         index++;
@@ -245,6 +267,7 @@ void velstat(const char* flow_file)
     }
     fclose(fp);
    
+    /* write output*/
     fpw = safe_fopen(OUTPUT3,"w");
     fprintf(fpw, "threshold,points,percentage\n");
     for(i=0;i<NUMOFTHRESHOLD;i++){
@@ -264,12 +287,14 @@ void wakevis(const char* flow_file)
     char buf[MAX_BUF_LEN];
     FILE *fp,*fpw;
 
+    /* initialize u */
     for (i = 0; i < n; i++){
         points[i].u = FLT_MIN;
     }
 
     yheight = (float*) calloc(n,sizeof(float));
     
+    /* read data */
     fp = safe_fopen(flow_file, "r");
     fgets(buf, MAX_BUF_LEN,fp); //skip first line
     while(fscanf(fp,"%f,%f,%f,%f\n",&x,&y,&u,&v) == 4) {
@@ -289,6 +314,7 @@ void wakevis(const char* flow_file)
     }
     fclose(fp);
 
+    /* write output */
     fpw = safe_fopen(OUTPUT4, "w");
     fprintf(fpw,"x,y_h\n");
     for(i=0; i<n; i++){
