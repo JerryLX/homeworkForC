@@ -190,6 +190,58 @@ void coarsegrid_on_x(int resolution, struct FlowPoint *data, int begin, int end,
 void coarsegrid(const char* flow_file, int resolution)
 {
     FILE *fp, *fpw;
+    struct Grid *grids;
+    char buf[MAX_BUF_LEN];
+    int i, num = pow(resolution,2);
+    float x,y,u,v;
+    int *count;
+    fp = safe_fopen(flow_file, "r");
+
+    grids = safe_malloc(sizeof(struct Grid) * num);
+    count = safe_malloc(sizeof(int) * num);
+    memset(grids,0,sizeof(struct Grid) * num);
+    memset(count,0,sizeof(int)*num);
+    /* read data */
+    fgets(buf, MAX_BUF_LEN,fp); //skip first line
+    while(fscanf(fp,"%f,%f,%f,%f\n",&x,&y,&u,&v) == 4) {
+        int index_x = (x-XMIN)/WIDTH*resolution;
+        int index_y = (y-YMIN)/HEIGHT*resolution;
+        if(index_x == resolution)
+            index_x--;
+        if(index_y == resolution)
+            index_y--;
+
+        grids[index_x * resolution + index_y].x += x;
+        grids[index_x * resolution + index_y].y += y;
+        grids[index_x * resolution + index_y].u += u;
+        grids[index_x * resolution + index_y].v += v;
+        count[index_x * resolution + index_y]++;
+    }
+    for(i=0;i<num;i++){
+        grids[i].x = grids[i].x/count[i];
+        grids[i].y = grids[i].y/count[i];
+        grids[i].u = grids[i].u/count[i];
+        grids[i].v = grids[i].v/count[i];
+        grids[i].score = 100 * sqrt(pow(grids[i].u,2)+pow(grids[i].v,2))/sqrt(pow(grids[i].x,2)+pow(grids[i].y,2));
+    }
+    fclose(fp);
+    /* sort result by score */
+    qsort(grids,num,sizeof(struct Grid),sort_by_score);
+    
+    /* write output */
+    fpw = safe_fopen(OUTPUT2,"w");
+    fprintf(fpw, "x,y,u,v,S\n");
+    for(i=0;i<num;i++){
+        fprintf(fpw, "%.6f,%.6f,%.6f,%.6f,%.6f\n",grids[i].x,grids[i].y,grids[i].u,grids[i].v,grids[i].score);
+    }
+    fclose(fpw);
+    free(grids);
+    free(count);
+}
+
+void coarsegrid_bak(const char* flow_file, int resolution)
+{
+    FILE *fp, *fpw;
     struct FlowPoint *data;
     struct Grid *grids;
     char buf[MAX_BUF_LEN];
