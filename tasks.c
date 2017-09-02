@@ -238,7 +238,6 @@ void velstat(const char* flow_file)
     for(i=0;i<NUMOFTHRESHOLD;i++){
         fprintf(fpw, "%.6f,%d,%.6f\n",start+i*0.1,num[i],(float)num[i]*100/index);
     }
-    fpw = safe_fopen(OUTPUT3,"w");
     
     fclose(fpw);
 }
@@ -265,6 +264,11 @@ void wakevis(const char* flow_file)
         int index = ((x+THRESHOLD)/STEP);
         if(x < index*STEP + THRESHOLD && x > index*STEP - THRESHOLD){
             if(u > points[index-2].u){
+                points[index-2].u = u;
+                points[index-2].x = x;
+                points[index-2].y = y;
+            }
+            else if(u == points[index-2].u && y < points[index-2].y){
                 points[index-2].u = u;
                 points[index-2].x = x;
                 points[index-2].y = y;
