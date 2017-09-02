@@ -157,10 +157,12 @@ void coarsegrid_on_x(int resolution, struct FlowPoint *data, int begin, int end,
     
     qsort(&data[begin],end-begin,sizeof(struct FlowPoint),sort_by_y);
     for(i=1;i<=resolution;i++){
-        float next_y = YMIN + i*height_cell;
+        double next_y = YMIN + i*height_cell;
+        if(i == resolution)
+            next_y = YMAX;
         ybegin = yend;
         for(;yend<end;yend++){
-            if(data[yend].y>next_y)
+            if(data[yend].y >= next_y)
                 break;
         }
         coarsegrid_on_y(data,ybegin,yend,grids+(i-1));
@@ -188,10 +190,12 @@ void coarsegrid(const char* flow_file, int resolution)
     grids = safe_malloc(sizeof(struct Grid) * num);
     qsort(data,index,sizeof(struct FlowPoint),sort_by_x);
     for(i=1;i<=resolution;i++){
-        float next_x = XMIN + i*width_cell;
+        double next_x = XMIN + i*width_cell;
+        if(i == resolution)
+            next_x = XMAX;
         start = end;
         for(;end<index;end++){
-            if(data[end].x>next_x)
+            if(data[end].x >= next_x)
                 break;
         }
         coarsegrid_on_x(resolution,data,start,end,grids+(i-1)*resolution);
