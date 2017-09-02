@@ -27,7 +27,7 @@
 #define NUMOFTHRESHOLD 7
 #define FIRSTTHRESHOLD 0.5
 #define STEP 5
-#define THRESHOLD 0.03
+#define THRESHOLD 0.05
 
 #define OUTPUT1 "task1.csv"
 #define OUTPUT2 "task2.csv"
@@ -117,7 +117,6 @@ void maxveldiff(const char* flow_file)
         index++;
     }
     fclose(fp);
-
     fpw = safe_fopen(OUTPUT1,"w");
     fprintf(fpw, "x,y,u,v\n");
     fprintf(fpw, "%.6f,%.6f,%.6f,%.6f\n",data[index_umax].x,data[index_umax].y,data[index_umax].u,data[index_umax].v);
@@ -149,7 +148,7 @@ void coarsegrid_on_y(struct FlowPoint *data, int begin, int end, struct Grid* gr
     grid->y = ysum/(end-begin);
     grid->u = usum/(end-begin);
     grid->v = vsum/(end-begin);
-    grid->score = sqrt(pow(grid->u,2)+pow(grid->v,2))/sqrt(pow(grid->x,2)+pow(grid->y,2));
+    grid->score = 100 * sqrt(pow(grid->u,2)+pow(grid->v,2))/sqrt(pow(grid->x,2)+pow(grid->y,2));
 }
 
 void coarsegrid_on_x(int resolution, struct FlowPoint *data, int begin, int end, struct Grid* grids){
