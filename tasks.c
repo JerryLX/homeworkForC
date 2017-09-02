@@ -27,7 +27,7 @@
 #define NUMOFTHRESHOLD 7
 #define FIRSTTHRESHOLD 0.5
 #define STEP 5
-#define THRESHOLD 0.05
+#define THRESHOLD 0.03
 
 #define OUTPUT1 "task1.csv"
 #define OUTPUT2 "task2.csv"
@@ -157,12 +157,17 @@ void coarsegrid_on_x(int resolution, struct FlowPoint *data, int begin, int end,
     
     qsort(&data[begin],end-begin,sizeof(struct FlowPoint),sort_by_y);
     for(i=1;i<=resolution;i++){
+        double cur_y = YMIN + (i-1)*height_cell;
         double next_y = YMIN + i*height_cell;
         if(i == resolution)
             next_y = YMAX+1;
-        ybegin = yend;
-        for(;yend<end;yend++){
-            if(data[yend].y >= next_y)
+        
+        for(ybegin=begin;ybegin<end;ybegin++){
+            if(data[ybegin].y >= cur_y) break;
+        }
+
+        for(yend=ybegin;yend<end;yend++){
+            if(data[yend].y > next_y)
                 break;
         }
         coarsegrid_on_y(data,ybegin,yend,grids+(i-1));
@@ -190,12 +195,16 @@ void coarsegrid(const char* flow_file, int resolution)
     grids = safe_malloc(sizeof(struct Grid) * num);
     qsort(data,index,sizeof(struct FlowPoint),sort_by_x);
     for(i=1;i<=resolution;i++){
+        double cur_x = XMIN + (i-1)*width_cell;
         double next_x = XMIN + i*width_cell;
         if(i == resolution)
             next_x = XMAX+1;
-        start = end;
-        for(;end<index;end++){
-            if(data[end].x >= next_x)
+        
+        for(start=0;start<index;start++){
+            if(data[start].x >= cur_x) break;
+        }
+        for(end=start;end<index;end++){
+            if(data[end].x > next_x)
                 break;
         }
         coarsegrid_on_x(resolution,data,start,end,grids+(i-1)*resolution);
