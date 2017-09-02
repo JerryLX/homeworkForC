@@ -159,7 +159,7 @@ void coarsegrid_on_x(int resolution, struct FlowPoint *data, int begin, int end,
     for(i=1;i<=resolution;i++){
         double next_y = YMIN + i*height_cell;
         if(i == resolution)
-            next_y = YMAX;
+            next_y = YMAX+1;
         ybegin = yend;
         for(;yend<end;yend++){
             if(data[yend].y >= next_y)
@@ -192,7 +192,7 @@ void coarsegrid(const char* flow_file, int resolution)
     for(i=1;i<=resolution;i++){
         double next_x = XMIN + i*width_cell;
         if(i == resolution)
-            next_x = XMAX;
+            next_x = XMAX+1;
         start = end;
         for(;end<index;end++){
             if(data[end].x >= next_x)
